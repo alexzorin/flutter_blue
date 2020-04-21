@@ -4,7 +4,6 @@
 
 #import "FlutterBluePlugin.h"
 #import "Flutterblue.pbobjc.h"
-#include <os/log.h>
 
 @interface CBUUID (CBUUIDAdditionsFlutterBlue)
 - (NSString *)fullUUIDString;
@@ -99,11 +98,9 @@ typedef NS_ENUM(NSUInteger, LogLevel) {
     if (request.allowDuplicates) {
         [scanOpts setObject:[NSNumber numberWithBool:YES] forKey:CBCentralManagerScanOptionAllowDuplicatesKey];
     }
-    os_log_info(OS_LOG_DEFAULT, "scanForPeripheralsWithServices");
     [self->_centralManager scanForPeripheralsWithServices:uuids options:scanOpts];
     result(nil);
   } else if([@"stopScan" isEqualToString:call.method]) {
-    os_log_info(OS_LOG_DEFAULT, "stopScan");
     [self->_centralManager stopScan];
     result(nil);
   } else if([@"getConnectedDevices" isEqualToString:call.method]) {
@@ -123,7 +120,6 @@ typedef NS_ENUM(NSUInteger, LogLevel) {
                                    details:nil];
       }
       // TODO: Implement Connect options (#36)
-      os_log_info(OS_LOG_DEFAULT, "connectPeripheral.connect");
       [_centralManager connectPeripheral:peripheral options:nil];
       result(nil);
     } @catch(FlutterError *e) {
@@ -133,7 +129,6 @@ typedef NS_ENUM(NSUInteger, LogLevel) {
     NSString *remoteId = [call arguments];
     @try {
       CBPeripheral *peripheral = [self findPeripheral:remoteId];
-      os_log_info(OS_LOG_DEFAULT, "cancelPeripheralConnection");
       [_centralManager cancelPeripheralConnection:peripheral];
       result(nil);
     } @catch(FlutterError *e) {
@@ -143,7 +138,6 @@ typedef NS_ENUM(NSUInteger, LogLevel) {
     NSString *remoteId = [call arguments];
     @try {
       CBPeripheral *peripheral = [self findPeripheral:remoteId];
-      os_log_info(OS_LOG_DEFAULT, "peripheral.state");
       result([self toFlutterData:[self toDeviceStateProto:peripheral state:peripheral.state]]);
     } @catch(FlutterError *e) {
       result(e);
@@ -157,7 +151,6 @@ typedef NS_ENUM(NSUInteger, LogLevel) {
       // Clear helper arrays
       [_servicesThatNeedDiscovered removeAllObjects];
       [_characteristicsThatNeedDiscovered removeAllObjects ];
-      os_log_info(OS_LOG_DEFAULT, "peripheral.discoverServices");
       [peripheral discoverServices:uuids];
       result(nil);
     } @catch(FlutterError *e) {
@@ -384,7 +377,7 @@ typedef NS_ENUM(NSUInteger, LogLevel) {
 }
 
 - (void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral {
-  os_log_info(OS_LOG_DEFAULT, @"didConnectPeripheral");
+  NSLog(@"didConnectPeripheral");
   // Register self as delegate for peripheral
   peripheral.delegate = self;
   
@@ -397,7 +390,7 @@ typedef NS_ENUM(NSUInteger, LogLevel) {
 }
 
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error {
-  os_log_info(OS_LOG_DEFAULT, @"didDisconnectPeripheral");
+  NSLog(@"didDisconnectPeripheral");
   // Unregister self as delegate for peripheral, not working #42
   peripheral.delegate = nil;
   
@@ -413,7 +406,7 @@ typedef NS_ENUM(NSUInteger, LogLevel) {
 // CBPeripheralDelegate methods
 //
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverServices:(NSError *)error {
-  os_log_info(OS_LOG_DEFAULT, @"didDiscoverServices");
+  NSLog(@"didDiscoverServices");
   // Send negotiated mtu size
   uint32_t mtu = [self getMtu:peripheral];
   [_channel invokeMethod:@"MtuSize" arguments:[self toFlutterData:[self toMtuSizeResponseProto:peripheral mtu:mtu]]];
@@ -421,14 +414,14 @@ typedef NS_ENUM(NSUInteger, LogLevel) {
   // Loop through and discover characteristics and secondary services
   [_servicesThatNeedDiscovered addObjectsFromArray:peripheral.services];
   for(CBService *s in [peripheral services]) {
-    os_log_info(OS_LOG_DEFAULT, @"Found service: %@", [s.UUID UUIDString]);
+    NSLog(@"Found service: %@", [s.UUID UUIDString]);
     [peripheral discoverCharacteristics:nil forService:s];
     // [peripheral discoverIncludedServices:nil forService:s]; // Secondary services in the future (#8)
   }
 }
 
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverCharacteristicsForService:(CBService *)service error:(NSError *)error {
-  os_log_info(OS_LOG_DEFAULT, @"didDiscoverCharacteristicsForService");
+  NSLog(@"didDiscoverCharacteristicsForService");
   // Loop through and discover descriptors for characteristics
   [_servicesThatNeedDiscovered removeObject:service];
   [_characteristicsThatNeedDiscovered addObjectsFromArray:service.characteristics];
@@ -438,7 +431,7 @@ typedef NS_ENUM(NSUInteger, LogLevel) {
 }
 
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverDescriptorsForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error {
-  os_log_info(OS_LOG_DEFAULT, @"didDiscoverDescriptorsForCharacteristic");
+  NSLog(@"didDiscoverDescriptorsForCharacteristic");
   [_characteristicsThatNeedDiscovered removeObject:characteristic];
   if(_servicesThatNeedDiscovered.count > 0 || _characteristicsThatNeedDiscovered.count > 0) {
     // Still discovering
@@ -450,7 +443,7 @@ typedef NS_ENUM(NSUInteger, LogLevel) {
 }
 
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverIncludedServicesForService:(CBService *)service error:(NSError *)error {
-  os_log_info(OS_LOG_DEFAULT, @"didDiscoverIncludedServicesForService");
+  NSLog(@"didDiscoverIncludedServicesForService");
   // Loop through and discover characteristics for secondary services
   for(CBService *ss in [service includedServices]) {
     [peripheral discoverCharacteristics:nil forService:ss];
