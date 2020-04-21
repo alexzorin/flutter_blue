@@ -420,7 +420,7 @@ typedef NS_ENUM(NSUInteger, LogLevel) {
   // Loop through and discover characteristics and secondary services
   [_servicesThatNeedDiscovered addObjectsFromArray:peripheral.services];
   for(CBService *s in [peripheral services]) {
-    os_log(@"Found service: %@", [s.UUID UUIDString]);
+    NSLog(@"Found service: %@", [s.UUID UUIDString]);
     [peripheral discoverCharacteristics:nil forService:s];
     // [peripheral discoverIncludedServices:nil forService:s]; // Secondary services in the future (#8)
   }
@@ -449,7 +449,7 @@ typedef NS_ENUM(NSUInteger, LogLevel) {
 }
 
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverIncludedServicesForService:(CBService *)service error:(NSError *)error {
-  is_log(@"didDiscoverIncludedServicesForService");
+  os_log(@"didDiscoverIncludedServicesForService");
   // Loop through and discover characteristics for secondary services
   for(CBService *ss in [service includedServices]) {
     [peripheral discoverCharacteristics:nil forService:ss];
