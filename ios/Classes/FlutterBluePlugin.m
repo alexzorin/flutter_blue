@@ -415,7 +415,7 @@ typedef NS_ENUM(NSUInteger, LogLevel) {
   [_servicesThatNeedDiscovered addObjectsFromArray:peripheral.services];
   for(CBService *s in [peripheral services]) {
     NSLog(@"Found service: %@", [s.UUID UUIDString]);
-    [peripheral discoverCharacteristics:nil forService:s];
+    // [peripheral discoverCharacteristics:nil forService:s];
     // [peripheral discoverIncludedServices:nil forService:s]; // Secondary services in the future (#8)
   }
 }
