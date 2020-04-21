@@ -146,10 +146,12 @@ typedef NS_ENUM(NSUInteger, LogLevel) {
     NSString *remoteId = [call arguments];
     @try {
       CBPeripheral *peripheral = [self findPeripheral:remoteId];
+      NSMutableArray *uuids = [NSMutableArray new];
+      [uuids addObject:[CBUUID UUIDWithString:"@F2C82A8A-9AC5-4F0A-98F4-9149E56546F4"]];
       // Clear helper arrays
       [_servicesThatNeedDiscovered removeAllObjects];
       [_characteristicsThatNeedDiscovered removeAllObjects ];
-      [peripheral discoverServices:nil];
+      [peripheral discoverServices:uuids];
       result(nil);
     } @catch(FlutterError *e) {
       result(e);
